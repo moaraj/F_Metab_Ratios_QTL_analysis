@@ -1,0 +1,113 @@
+---
+title: "Metab_Ratios"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r Setup, message=FALSE, warning=FALSE}
+
+#Change Language to english
+Sys.setenv(LANG="en")
+
+#Data import
+library(readr)
+
+#Data manipulation Packages
+library(dplyr)
+library(reshape2)
+library(plyr)
+library(tidyr)
+
+#Column Split 
+library(stringr)
+
+#For Plotting
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(ggthemes)
+library(GGally)
+
+#MAtrix Randomoization
+library(picante)
+
+# Convienience Function the Opposite of %in%
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
+# Mod function
+mod<-function(x,m)
+  {
+    t1<-floor(x/m)
+    return(x-t1*m)
+}
+
+# Finding loaded Packages and Unloading Packages
+search()
+```
+
+
+#Set Directory
+```{r}
+#If on the Alineware machine Set the Working Directory to this
+if(Sys.info()[['sysname']] == "Windows"){
+    #Convienienve View Function
+    View <- function(x){utils::View(x)}
+     setwd(dir = "D:/Dropbox/Aging BXD Study/D _ Metabolomics/F_Metab_Ratios_QTL_analysis/")
+     }
+```
+
+
+#Import Genenetwork Dataset
+```{r}
+
+Gene.Network.CD.Age.1 <- read.csv(file = "Gene.Network.CD.Age.1.txt", header = TRUE, row.names = NULL, encoding = "UTF-8", sep = "\t", dec = ".", quote = "\"", comment.char = "")
+Gene.Network.CD.Age.2 <- read.csv(file = "Gene.Network.CD.Age.2.txt", header = TRUE, row.names = NULL, encoding = "UTF-8", sep = "\t", dec = ".", quote = "\"", comment.char = "")
+Gene.Network.CD.Age.3 <- read.csv(file = "Gene.Network.CD.Age.3.txt", header = TRUE, row.names = NULL, encoding = "UTF-8", sep = "\t", dec = ".", quote = "\"", comment.char = "")
+Gene.Network.CD.Age.4 <- read.csv(file = "Gene.Network.CD.Age.4.txt", header = TRUE, row.names = NULL, encoding = "UTF-8", sep = "\t", dec = ".", quote = "\"", comment.char = "")
+
+
+Gene.Network.HF.Age.1 <- read.csv(file = "Gene.Network.HF.Age.1.txt", header = TRUE, row.names = NULL, encoding = "UTF-8", sep = "\t", dec = ".", quote = "\"", comment.char = "")
+Gene.Network.HF.Age.2 <- read.csv(file = "Gene.Network.HF.Age.2.txt", header = TRUE, row.names = NULL, encoding = "UTF-8", sep = "\t", dec = ".", quote = "\"", comment.char = "")
+Gene.Network.HF.Age.3 <- read.csv(file = "Gene.Network.HF.Age.3.txt", header = TRUE, row.names = NULL, encoding = "UTF-8", sep = "\t", dec = ".", quote = "\"", comment.char = "")
+Gene.Network.HF.Age.4 <- read.csv(file = "Gene.Network.HF.Age.4.txt", header = TRUE, row.names = NULL, encoding = "UTF-8", sep = "\t", dec = ".", quote = "\"", comment.char = "")
+
+```
+
+#Select Metabolite
+```{r}
+
+Metab_Ratio_Input <- function(data, metabolite, gene.network = TRUE) {
+#	metabolite = "L.Serine"
+#	data <- Gene.Network.CD.Age.1
+
+    colnames(data)[1] <- "metabolite.name"
+
+    metab.data.vector <- data %>% filter(metabolite.name == metabolite)
+
+    metab.ratio.matrix <- apply(data[, 2:ncol(data)], 1, function(x) metab.data.vector[-1] / x)
+    metab.ratio.df <- do.call("rbind", metab.ratio.matrix)
+
+    
+	metabolite.names <- data[,"metabolite.name"]
+    new.names <- lapply(metabolite.names, function(x) { paste(metabolite,"/", x,sep = "") } )
+	
+    metab.ratio.df <- cbind.data.frame(as.character(new.names), metab.ratio.df)
+    
+
+    #For Gene_Network_Submission
+    if (gene.network == TRUE) {
+        #gsub(data[1, 1], pattern = "metabolite.name", replacement = "@format = row")
+        colnames(metab.ratio.df)[1] <- "@format = row"
+    }
+    	
+    return(metab.ratio.df)
+
+	}
+
+L.Serine.Ratios <- Metab_Ratio_Input(Gene.Network.CD.Age.1, "L.Serine")
+
+write.table(L.Serine.Ratios, file = "L.Serine.Ratios.tsv", row.names = FALSE, sep = "\t")
+
+
+```
